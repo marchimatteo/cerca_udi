@@ -1,6 +1,8 @@
 # CERCA_UDI
 Software per la ricerca di codici UDI sulla banca dati EUDAMED partendo da una serie di codici REF.
 
+[Scarica l'ultima versione](https://github.com/marchimatteo/cerca_udi/releases/latest)
+
 Appena lanciato, il software chiederà di selezionare un file excel in cui dovranno essere presenti 3 colonne:
 - PRODUTTORE: con il nome del produttore
 - REF: con il codice REF del dispositivo
