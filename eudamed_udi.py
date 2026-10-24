@@ -28,7 +28,7 @@ ERRORE = "#ERRORE"
 
 INTESTAZIONI = [
     "PRODUTTORE", "EU_PRODUTTORE", "REF", "DESCRIZIONE",
-    "EU_DESCRIZIONE", "EU_UDI", "EU_BASIC_UDI",
+    "EU_DESCRIZIONE", "EU_UDI", "EU_BASIC_UDI", "N_RISULTATI",
 ]
 
 
@@ -119,7 +119,7 @@ def salva_risultato(righe_out, cartella: Path) -> Path:
     for r in righe_out:
         ws.append(r)
 
-    larghezze = [28, 32, 20, 40, 40, 22, 28]
+    larghezze = [28, 32, 20, 40, 40, 22, 28, 14]
     for i, l in enumerate(larghezze):
         ws.column_dimensions[chr(ord("A") + i)].width = l
     ws.freeze_panes = "A2"
@@ -158,19 +158,19 @@ def main():
             print(f"Chiamata {n} di {totale}  (REF: {ref or '-'})", end=" ... ", flush=True)
 
             if not ref:
-                risultati.append([produttore, "", ref, descrizione, "", NON_TROVATO, ""])
+                risultati.append([produttore, "", ref, descrizione, "", NON_TROVATO, "", 0])
                 print("REF vuoto")
                 continue
 
             try:
                 trovati = client.cerca(ref)
             except Exception as e:
-                risultati.append([produttore, "", ref, descrizione, "", ERRORE, ""])
+                risultati.append([produttore, "", ref, descrizione, "", ERRORE, "", ""])
                 print(f"ERRORE ({e})")
                 continue
 
             if not trovati:
-                risultati.append([produttore, "", ref, descrizione, "", NON_TROVATO, ""])
+                risultati.append([produttore, "", ref, descrizione, "", NON_TROVATO, "", 0])
                 print("non trovato")
                 continue
 
@@ -183,6 +183,7 @@ def main():
                     item.get("TRADE_NAME") or "",
                     item.get("PRIMARY_DI") or "",
                     item.get("BASIC_UDI") or "",
+                    len(trovati),
                 ])
             print(f"{len(trovati)} risultat{'o' if len(trovati) == 1 else 'i'}")
 
