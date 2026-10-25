@@ -10,6 +10,6 @@ Appena lanciato, il software chiederà di selezionare un file excel in cui dovra
 
 Nel repo è disponibile il file di esempio *esempio_file_da_caricare.xlsx* che può essere utilizzato direttamente.
 
-Il REF è l'unico valore che effettivamente viene inviato ad EUDAMED, produttore e descrizione servono per verificare manualmente che il dispositivo trovato corrisponda effettivamente a quello desiderato.
+Verso EUDAMED viene inviato solo il REF. Il campo PRODUTTORE serve a filtrare i risultati ricevuti: se per quel REF almeno un risultato ha un produttore corrispondente a quello indicato, vengono mostrati solo quei risultati; altrimenti vengono restituiti tutti. La DESCRIZIONE non influisce sulla ricerca e serve solo per verificare manualmente che il dispositivo trovato sia quello desiderato.
 
 Se si desidera modificare il codice Python poi per rigenerare l'eseguibile è sufficiente eseguire *pyinstaller CercaUDI.spec*
