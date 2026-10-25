@@ -23,6 +23,7 @@ API_URL = (
 PAUSA_MINIMA = 0.5   # secondi tra una chiamata e la successiva
 TIMEOUT = 30         # secondi di timeout per ogni chiamata
 
+REF_VUOTO = "#REF VUOTO"
 NON_TROVATO = "#NON TROVATO"
 ERRORE = "#ERRORE"
 
@@ -158,19 +159,19 @@ def main():
             print(f"Chiamata {n} di {totale}  (REF: {ref or '-'})", end=" ... ", flush=True)
 
             if not ref:
-                risultati.append([produttore, "", ref, descrizione, "", NON_TROVATO, "", 0])
+                risultati.append([produttore, REF_VUOTO, ref, descrizione, REF_VUOTO, REF_VUOTO, REF_VUOTO, 0])
                 print("REF vuoto")
                 continue
 
             try:
                 trovati = client.cerca(ref)
             except Exception as e:
-                risultati.append([produttore, "", ref, descrizione, "", ERRORE, "", ""])
+                risultati.append([produttore, ERRORE, ref, descrizione, ERRORE, ERRORE, ERRORE, ""])
                 print(f"ERRORE ({e})")
                 continue
 
             if not trovati:
-                risultati.append([produttore, "", ref, descrizione, "", NON_TROVATO, "", 0])
+                risultati.append([produttore, NON_TROVATO, ref, descrizione, NON_TROVATO, NON_TROVATO, NON_TROVATO, 0])
                 print("non trovato")
                 continue
 
