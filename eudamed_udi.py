@@ -174,7 +174,16 @@ def main():
                 print("non trovato")
                 continue
 
-            for item in trovati:
+            da_includere = []
+            if produttore:
+                for item in trovati:
+                    if produttore.casefold() == (item.get("MF_NAME") or "").casefold():
+                        da_includere.append(item)
+                        
+            if len(da_includere) == 0:
+                da_includere = trovati
+
+            for item in da_includere:
                 risultati.append([
                     produttore,
                     item.get("MF_NAME") or "",
@@ -183,9 +192,9 @@ def main():
                     item.get("TRADE_NAME") or "",
                     item.get("PRIMARY_DI") or "",
                     item.get("BASIC_UDI") or "",
-                    len(trovati),
+                    len(da_includere),
                 ])
-            print(f"{len(trovati)} risultat{'o' if len(trovati) == 1 else 'i'}")
+            print(f"{len(da_includere)} risultat{'o' if len(da_includere) == 1 else 'i'}")
 
     except KeyboardInterrupt:
         print("\nInterrotto dall'utente: salvo i risultati parziali.")
