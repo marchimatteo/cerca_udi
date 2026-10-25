@@ -23,6 +23,7 @@ API_URL = (
 PAUSA_MINIMA = 0.5   # secondi tra una chiamata e la successiva
 TIMEOUT = 30         # secondi di timeout per ogni chiamata
 
+REF_VUOTO = "#REF VUOTO"
 NON_TROVATO = "#NON TROVATO"
 ERRORE = "#ERRORE"
 
@@ -158,23 +159,32 @@ def main():
             print(f"Chiamata {n} di {totale}  (REF: {ref or '-'})", end=" ... ", flush=True)
 
             if not ref:
-                risultati.append([produttore, "", ref, descrizione, "", NON_TROVATO, "", 0])
+                risultati.append([produttore, REF_VUOTO, ref, descrizione, REF_VUOTO, REF_VUOTO, REF_VUOTO, 0])
                 print("REF vuoto")
                 continue
 
             try:
                 trovati = client.cerca(ref)
             except Exception as e:
-                risultati.append([produttore, "", ref, descrizione, "", ERRORE, "", ""])
+                risultati.append([produttore, ERRORE, ref, descrizione, ERRORE, ERRORE, ERRORE, ""])
                 print(f"ERRORE ({e})")
                 continue
 
             if not trovati:
-                risultati.append([produttore, "", ref, descrizione, "", NON_TROVATO, "", 0])
+                risultati.append([produttore, NON_TROVATO, ref, descrizione, NON_TROVATO, NON_TROVATO, NON_TROVATO, 0])
                 print("non trovato")
                 continue
 
-            for item in trovati:
+            da_includere = []
+            if produttore:
+                for item in trovati:
+                    if produttore.casefold() == (item.get("MF_NAME") or "").casefold():
+                        da_includere.append(item)
+                        
+            if len(da_includere) == 0:
+                da_includere = trovati
+
+            for item in da_includere:
                 risultati.append([
                     produttore,
                     item.get("MF_NAME") or "",
@@ -183,9 +193,9 @@ def main():
                     item.get("TRADE_NAME") or "",
                     item.get("PRIMARY_DI") or "",
                     item.get("BASIC_UDI") or "",
-                    len(trovati),
+                    len(da_includere),
                 ])
-            print(f"{len(trovati)} risultat{'o' if len(trovati) == 1 else 'i'}")
+            print(f"{len(da_includere)} risultat{'o' if len(da_includere) == 1 else 'i'}")
 
     except KeyboardInterrupt:
         print("\nInterrotto dall'utente: salvo i risultati parziali.")
