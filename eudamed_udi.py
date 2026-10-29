@@ -89,6 +89,12 @@ def leggi_righe(percorso: Path):
     return righe
 
 
+def normalizza_stringa(s: str | None) -> str:
+    if s is None:
+        return ""
+    return s.casefold().strip().replace(".", "")
+
+
 class ClientApi:
     def __init__(self):
         self.sessione = requests.Session()
@@ -176,9 +182,10 @@ def main():
                 continue
 
             da_includere = []
-            if produttore:
+            produttore_normalizzato = normalizza_stringa(produttore)
+            if produttore_normalizzato:
                 for item in trovati:
-                    if produttore.casefold() == (item.get("MF_NAME") or "").casefold():
+                    if produttore_normalizzato == normalizza_stringa(item.get("MF_NAME")):
                         da_includere.append(item)
                         
             if len(da_includere) == 0:
