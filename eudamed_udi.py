@@ -15,6 +15,8 @@ from urllib.parse import quote
 
 import requests
 from openpyxl import Workbook, load_workbook
+from openpyxl.formatting.rule import FormulaRule
+from openpyxl.styles import PatternFill, Font
 
 API_URL = (
     "https://api.datalake.sante.service.ec.europa.eu/eudamed/udi"
@@ -29,7 +31,7 @@ ERRORE = "#ERRORE"
 
 INTESTAZIONI = [
     "PRODUTTORE", "EU_PRODUTTORE", "REF", "DESCRIZIONE",
-    "EU_DESCRIZIONE", "EU_UDI", "EU_BASIC_UDI", "N_RISULTATI",
+    "EU_DESCRIZIONE", "EU_UDI", "EU_BASIC_UDI", "N_RISULTATI", "STESSO_PRODUTTORE"
 ]
 
 
@@ -126,7 +128,7 @@ def salva_risultato(righe_out, cartella: Path) -> Path:
     for r in righe_out:
         ws.append(r)
 
-    larghezze = [28, 32, 20, 40, 40, 22, 28, 14]
+    larghezze = [28, 32, 20, 40, 40, 22, 28, 14, 14]
     for i, l in enumerate(larghezze):
         ws.column_dimensions[chr(ord("A") + i)].width = l
     ws.freeze_panes = "A2"
@@ -136,6 +138,38 @@ def salva_risultato(righe_out, cartella: Path) -> Path:
     for riga in ws.iter_rows(min_row=2):
         for idx in (2, 5, 6):
             riga[idx].number_format = "@"
+
+    # Formattazione condizionale (colori predefiniti di Excel), righe A:I
+    ultima_riga = max(ws.max_row, 2)
+    intervallo = f"A2:I{ultima_riga}"
+
+    # giallo_fill = PatternFill(start_color="FFEB9C", end_color="FFEB9C", fill_type="solid")
+    # giallo_font = Font(color="9C5700")
+    verde_fill = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid")
+    verde_font = Font(color="006100")
+    rosso_fill = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid")
+    rosso_font = Font(color="9C0006")
+
+    # 1) Verde: colonna I = "SI"
+    ws.conditional_formatting.add(
+        intervallo,
+        FormulaRule(
+            formula=['UPPER(TRIM($I2))="SI"'],
+            fill=verde_fill,
+            font=verde_font,
+            stopIfTrue=True,
+        ),
+    )
+    # 2) Rosso: colonna H = 0 o vuota
+    ws.conditional_formatting.add(
+        intervallo,
+        FormulaRule(
+            formula=['OR($H2="",$H2=0)'],
+            fill=rosso_fill,
+            font=rosso_font,
+            stopIfTrue=True,
+        ),
+    )
 
     nome = f"risultato_{datetime.now():%Y%m%d_%H%M%S}.xlsx"
     destinazione = cartella / nome
@@ -163,30 +197,53 @@ def main():
     try:
         for n, (produttore, ref, descrizione) in enumerate(righe, start=1):
             print(f"Chiamata {n} di {totale}  (REF: {ref or '-'})", end=" ... ", flush=True)
+            produttore_corrisponde = "NO"
 
             if not ref:
-                risultati.append([produttore, REF_VUOTO, ref, descrizione, REF_VUOTO, REF_VUOTO, REF_VUOTO, 0])
+                risultati.append([
+                    produttore, 
+                    REF_VUOTO, 
+                    ref, 
+                    descrizione, 
+                    REF_VUOTO, 
+                    REF_VUOTO, 
+                    REF_VUOTO, 
+                    0,
+                    produttore_corrisponde
+                ])
                 print("REF vuoto")
                 continue
 
             try:
                 trovati = client.cerca(ref)
             except Exception as e:
-                risultati.append([produttore, ERRORE, ref, descrizione, ERRORE, ERRORE, ERRORE, ""])
+                risultati.append([produttore, ERRORE, ref, descrizione, ERRORE, ERRORE, ERRORE, "", ""])
                 print(f"ERRORE ({e})")
                 continue
 
             if not trovati:
-                risultati.append([produttore, NON_TROVATO, ref, descrizione, NON_TROVATO, NON_TROVATO, NON_TROVATO, 0])
+                risultati.append([
+                    produttore, 
+                    NON_TROVATO, 
+                    ref, 
+                    descrizione, 
+                    NON_TROVATO, 
+                    NON_TROVATO, 
+                    NON_TROVATO, 
+                    0,
+                    produttore_corrisponde
+                ])
                 print("non trovato")
                 continue
 
             da_includere = []
+            # Se il produttore corrisponde, salvo solo quel risultato ed ignoro altri falsi positivi
             produttore_normalizzato = normalizza_stringa(produttore)
             if produttore_normalizzato:
                 for item in trovati:
                     if produttore_normalizzato == normalizza_stringa(item.get("MF_NAME")):
                         da_includere.append(item)
+                        produttore_corrisponde = "SI"
                         
             if len(da_includere) == 0:
                 da_includere = trovati
@@ -201,6 +258,7 @@ def main():
                     item.get("PRIMARY_DI") or "",
                     item.get("BASIC_UDI") or "",
                     len(da_includere),
+                    produttore_corrisponde
                 ])
             print(f"{len(da_includere)} risultat{'o' if len(da_includere) == 1 else 'i'}")
 
