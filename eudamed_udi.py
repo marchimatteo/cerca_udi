@@ -31,7 +31,7 @@ ERRORE = "#ERRORE"
 
 INTESTAZIONI = [
     "PRODUTTORE", "EU_PRODUTTORE", "REF", "DESCRIZIONE",
-    "EU_DESCRIZIONE", "EU_UDI", "EU_BASIC_UDI", "N_RISULTATI", "STESSO_PRODUTTORE"
+    "EU_TRADE_NAME", "EU_DEVICE_NAME", "EU_UDI", "EU_BASIC_UDI", "N_RISULTATI", "STESSO_PRODUTTORE"
 ]
 
 
@@ -128,7 +128,7 @@ def salva_risultato(righe_out, cartella: Path) -> Path:
     for r in righe_out:
         ws.append(r)
 
-    larghezze = [28, 32, 20, 40, 40, 22, 28, 14, 14]
+    larghezze = [28, 28, 20, 40, 20, 20, 22, 22, 14, 14]
     for i, l in enumerate(larghezze):
         ws.column_dimensions[chr(ord("A") + i)].width = l
     ws.freeze_panes = "A2"
@@ -136,12 +136,12 @@ def salva_risultato(righe_out, cartella: Path) -> Path:
 
     # REF, UDI e BASIC UDI sempre come testo (evita perdita di zeri iniziali)
     for riga in ws.iter_rows(min_row=2):
-        for idx in (2, 5, 6):
+        for idx in (2, 6, 7):
             riga[idx].number_format = "@"
 
-    # Formattazione condizionale (colori predefiniti di Excel), righe A:I
+    # Formattazione condizionale (colori predefiniti di Excel), righe A:J
     ultima_riga = max(ws.max_row, 2)
-    intervallo = f"A2:I{ultima_riga}"
+    intervallo = f"A2:J{ultima_riga}"
 
     # giallo_fill = PatternFill(start_color="FFEB9C", end_color="FFEB9C", fill_type="solid")
     # giallo_font = Font(color="9C5700")
@@ -154,7 +154,7 @@ def salva_risultato(righe_out, cartella: Path) -> Path:
     ws.conditional_formatting.add(
         intervallo,
         FormulaRule(
-            formula=['UPPER(TRIM($I2))="SI"'],
+            formula=['UPPER(TRIM($J2))="SI"'],
             fill=verde_fill,
             font=verde_font,
             stopIfTrue=True,
@@ -164,7 +164,7 @@ def salva_risultato(righe_out, cartella: Path) -> Path:
     ws.conditional_formatting.add(
         intervallo,
         FormulaRule(
-            formula=['OR($H2="",$H2=0)'],
+            formula=['OR($H2="",$I2=0)'],
             fill=rosso_fill,
             font=rosso_font,
             stopIfTrue=True,
@@ -205,7 +205,8 @@ def main():
                     REF_VUOTO, 
                     ref, 
                     descrizione, 
-                    REF_VUOTO, 
+                    REF_VUOTO,
+                    REF_VUOTO,
                     REF_VUOTO, 
                     REF_VUOTO, 
                     0,
@@ -217,7 +218,7 @@ def main():
             try:
                 trovati = client.cerca(ref)
             except Exception as e:
-                risultati.append([produttore, ERRORE, ref, descrizione, ERRORE, ERRORE, ERRORE, "", ""])
+                risultati.append([produttore, ERRORE, ref, descrizione, ERRORE, ERRORE, ERRORE, ERRORE, "", ""])
                 print(f"ERRORE ({e})")
                 continue
 
@@ -227,7 +228,8 @@ def main():
                     NON_TROVATO, 
                     ref, 
                     descrizione, 
-                    NON_TROVATO, 
+                    NON_TROVATO,
+                    NON_TROVATO,
                     NON_TROVATO, 
                     NON_TROVATO, 
                     0,
@@ -255,6 +257,7 @@ def main():
                     ref,
                     descrizione,
                     item.get("TRADE_NAME") or "",
+                    item.get("DEVICE_NAME") or "",
                     item.get("PRIMARY_DI") or "",
                     item.get("BASIC_UDI") or "",
                     len(da_includere),
