@@ -94,7 +94,7 @@ def leggi_righe(percorso: Path):
 def normalizza_stringa(s: str | None) -> str:
     if s is None:
         return ""
-    return s.casefold().strip().replace(".", "")
+    return s.casefold().strip().replace(".", "").replace(",", "")
 
 
 class ClientApi:
@@ -154,7 +154,7 @@ def salva_risultato(righe_out, cartella: Path) -> Path:
     ws.conditional_formatting.add(
         intervallo,
         FormulaRule(
-            formula=['UPPER(TRIM($J2))="SI"'],
+            formula=['AND(UPPER(TRIM($J2))="SI",$I2=1)'],
             fill=verde_fill,
             font=verde_font,
             stopIfTrue=True,
